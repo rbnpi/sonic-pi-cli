@@ -1,6 +1,6 @@
 #!/usr/bin/env ruby
 
-require 'sonic_pi'
+require "sonic_pi.rb"
 
 def stdin
   unless STDIN.tty?
@@ -8,8 +8,13 @@ def stdin
   end
 end
 
+def pvalue #get current server port from server-output log
+  pval=`(grep "Listen port:" $HOME/.sonic-pi/log/*.*)`
+  return pval.split(" ").last.to_i
+end
+
 def args
-  ARGV.join(' ')
+  args=ARGV.join(' ')
 end
 
 def args_and_stdin
@@ -24,9 +29,9 @@ def print_help
 sonic-pi-cli
 
 Usage:
-  sonic_pi <code>
-  sonic_pi stop
-  cat music.rb | sonic_pi
+  sonic_pi -p<port no> <code>
+  sonic_pi -p<port no> stop
+  cat music.rb | sonic_pi -p<port no>
   sonic_pi --help
 
 Sonic Pi must be running for this utility to work.
@@ -41,18 +46,19 @@ Made by Nick Johnstone (github.com/Widdershin/sonic-pi-cli).
 Thanks to Sam Aaron for creating Sonic Pi.
 HELP
 end
-
+  
 def run
-  app = SonicPi.new
 
+  app = SonicPi.new(pvalue) #pass in port value
+  
   case args_and_stdin
   when '--help', '-h', ''
     print_help
   when 'stop'
     app.test_connection!
-
     app.stop
   else
+
     app.test_connection!
 
     app.run(args_and_stdin)
