@@ -1,7 +1,7 @@
 Gem::Specification.new do |s|
   s.name        = 'sonic-pi-cli'
-  s.version     = '0.1.1'
-  s.date        = '2016-11-10'
+  s.version     = '0.1.2'
+  s.date        = '2018-08-25'
   s.summary     = "Sonic Pi CLI"
   s.description = "A simple command line interface for Sonic Pi"
   s.authors     = ["Nick Johnstone"]
