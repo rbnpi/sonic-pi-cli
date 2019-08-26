@@ -5,6 +5,8 @@ A simple command line interface for Sonic Pi, written in Ruby.
 
 **Requires Sonic Pi v2.7 or higher**.
 
+ver 0.1.3 allows compatibility with Sonic Pi v3.2: tested on Linux, Raspberry Pi and Windows
+
 Installation
 -------
 
