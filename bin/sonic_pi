@@ -9,15 +9,17 @@ def stdin
 end
 
 def pvalue #get current listen port for Sonic Pi from log file
+  value= 4557 #pre new logfile format port was always 4557
   File.open(ENV['HOME']+'/.sonic-pi/log/server-output.log','r') do |f1|
     while l = f1.gets
       if l.include?"Listen port:"
-        return l.split(" ").last.to_i
+        valuec= l.split(" ").last.to_i
         break
       end
     end
     f1.close
   end
+  return value
 end
 
 def args
