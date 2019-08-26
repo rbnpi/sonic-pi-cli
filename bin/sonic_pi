@@ -8,9 +8,16 @@ def stdin
   end
 end
 
-def pvalue #get current server port from server-output log
-  pval=`(grep "Listen port:" $HOME/.sonic-pi/log/*.*)`
-  return pval.split(" ").last.to_i
+def pvalue #get current listen port for Sonic Pi from log file
+  File.open(ENV['HOME']+'/.sonic-pi/log/server-output.log','r') do |f1|
+    while l = f1.gets
+      if l.include?"Listen port:"
+        return l.split(" ").last.to_i
+        break
+      end
+    end
+    f1.close
+  end
 end
 
 def args
