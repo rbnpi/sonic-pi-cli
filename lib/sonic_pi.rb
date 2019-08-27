@@ -1,77 +1,46 @@
-#!/usr/bin/env ruby
+require 'socket'
+require 'rubygems'
+require 'osc-ruby'
+require 'securerandom'
 
-require "sonic_pi.rb"
-
-def stdin
-  unless STDIN.tty?
-    $stdin.read
+class SonicPi
+  def initialize(port=4557)
+    @port=port
   end
-end
 
-def pvalue #get current listen port for Sonic Pi from log file
-  value= 4557 #pre new logfile format port was always 4557
-  File.open(ENV['HOME']+'/.sonic-pi/log/server-output.log','r') do |f1|
-    while l = f1.gets
-      if l.include?"Listen port:"
-        value = l.split(" ").last.to_i
-        break
-      end
+  RUN_COMMAND = "/run-code"
+  STOP_COMMAND = "/stop-all-jobs"
+  SERVER = 'localhost'
+  GUI_ID = 'SONIC_PI_CLI'
+  
+
+
+  def run(command)
+    send_command(RUN_COMMAND, command)
+  end
+
+  def stop
+    send_command(STOP_COMMAND)
+  end
+
+  def test_connection!
+    begin
+      socket = UDPSocket.new
+      socket.bind(nil, @port)
+      abort("ERROR: Sonic Pi is not listening on #{@port} - is it running?")
+    rescue
+      # everything is good
     end
-    f1.close
   end
-  return value
-end
 
-def args
-  args=ARGV.join(' ')
-end
+  private
 
-def args_and_stdin
-  @args_and_stdin ||= [
-    args,
-    stdin,
-  ].join("\n").strip
-end
+  def client
+    @client ||= OSC::Client.new(SERVER, @port)
+  end
 
-def print_help
-  puts <<-HELP
-sonic-pi-cli
-
-Usage:
-  sonic_pi -p<port no> <code>
-  sonic_pi -p<port no> stop
-  cat music.rb | sonic_pi -p<port no>
-  sonic_pi --help
-
-Sonic Pi must be running for this utility to work.
-You can pipe code to stdin to execute it.
-
-Options:
-  <code>  Run the given code.
-  stop    Stop all running music.
-  --help  Display this text.
-
-Made by Nick Johnstone (github.com/Widdershin/sonic-pi-cli).
-Thanks to Sam Aaron for creating Sonic Pi.
-HELP
-end
-  
-def run
-
-  app = SonicPi.new(pvalue) #pass in port value
-  
-  case args_and_stdin
-  when '--help', '-h', ''
-    print_help
-  when 'stop'
-    app.test_connection!
-    app.stop
-  else
-
-    app.test_connection!
-
-    app.run(args_and_stdin)
+  def send_command(call_type, command=nil)
+    prepared_command = OSC::Message.new(call_type, GUI_ID, command)
+    client.send(prepared_command)
   end
 end
-
-run
