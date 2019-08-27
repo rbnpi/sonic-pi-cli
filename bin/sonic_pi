@@ -1,62 +1,47 @@
-#!/usr/bin/env ruby
+require 'socket'
+require 'rubygems'
+require 'osc-ruby'
+require 'securerandom'
 
-require 'sonic_pi'
+class SonicPi
+  def initialize(port=4557)
+    @port=port
+  end
 
-def stdin
-  unless STDIN.tty?
-    $stdin.read
+  RUN_COMMAND = "/run-code"
+  STOP_COMMAND = "/stop-all-jobs"
+  SERVER = 'localhost'
+  #PORT = 4557
+  GUI_ID = 'SONIC_PI_CLI'
+  
+
+
+  def run(command)
+    send_command(RUN_COMMAND, command)
+  end
+
+  def stop
+    send_command(STOP_COMMAND)
+  end
+
+  def test_connection!
+    begin
+      socket = UDPSocket.new
+      socket.bind(nil, @port)
+      abort("ERROR: Sonic Pi is not listening on #{@port} - is it running?")
+    rescue
+      # everything is good
+    end
+  end
+
+  private
+
+  def client
+    @client ||= OSC::Client.new(SERVER, @port)
+  end
+
+  def send_command(call_type, command=nil)
+    prepared_command = OSC::Message.new(call_type, GUI_ID, command)
+    client.send(prepared_command)
   end
 end
-
-def args
-  ARGV.join(' ')
-end
-
-def args_and_stdin
-  @args_and_stdin ||= [
-    args,
-    stdin,
-  ].join("\n").strip
-end
-
-def print_help
-  puts <<-HELP
-sonic-pi-cli
-
-Usage:
-  sonic_pi <code>
-  sonic_pi stop
-  cat music.rb | sonic_pi
-  sonic_pi --help
-
-Sonic Pi must be running for this utility to work.
-You can pipe code to stdin to execute it.
-
-Options:
-  <code>  Run the given code.
-  stop    Stop all running music.
-  --help  Display this text.
-
-Made by Nick Johnstone (github.com/Widdershin/sonic-pi-cli).
-Thanks to Sam Aaron for creating Sonic Pi.
-HELP
-end
-
-def run
-  app = SonicPi.new
-
-  case args_and_stdin
-  when '--help', '-h', ''
-    print_help
-  when 'stop'
-    app.test_connection!
-
-    app.stop
-  else
-    app.test_connection!
-
-    app.run(args_and_stdin)
-  end
-end
-
-run
